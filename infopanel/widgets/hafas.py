@@ -1,8 +1,10 @@
 from dataclasses import dataclass
-import requests
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
+import requests
 from requests.adapters import HTTPAdapter, Retry
+
 from ..ledpanel import LEDPanel
 from .base import Widget
 
@@ -118,9 +120,7 @@ class HafasAPI:
             "svcReqL": [data],
         }
 
-        res = self.session.post(self.ENDPOINT, json=body, headers={
-            "User-Agent": self.USER_AGENT
-        })
+        res = self.session.post(self.ENDPOINT, json=body, headers={"User-Agent": self.USER_AGENT})
         res.raise_for_status()
 
         return res.json()
@@ -133,9 +133,9 @@ class HafasAPI:
                     "field": "S",
                     "loc": {
                         "name": query,
-                        "type": "S"
-                    }
-                }
+                        "type": "S",
+                    },
+                },
             },
         })
 
@@ -154,8 +154,8 @@ class HafasAPI:
                     {
                         "type": "PROD",
                         "mode": "INC",
-                        "value": 127
-                    }
+                        "value": 127,
+                    },
                 ],
                 "stbLoc": {
                     "lid": location_id,

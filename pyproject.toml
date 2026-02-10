@@ -12,8 +12,25 @@ dependencies = [
 [dependency-groups]
 dev = [
     "rgbmatrixemulator>=0.15.1",
+    "ruff>=0.15.0",
     "watchfiles>=1.1.1",
 ]
 
 [tool.uv.sources]
 rgbmatrix = { git = "https://github.com/hzeller/rpi-rgb-led-matrix", rev = "631e6dc02f46d09e0ea4403dd1cc9663204edce5" }
+
+[tool.pytest.ini_options]
+pythonpath = ["."]  # Include src directory as a module
+addopts = ["--capture=no"]  # Always print test output
+
+[tool.ruff]
+preview = true
+exclude = ["notebooks/"]
+line-length = 180
+
+[tool.ruff.lint]
+# extend-select = ["I", "D", "Q"]  # Include isort and docstring checks
+extend-select = ["I"]  # Include isort checks
+
+[tool.pyright]
+typeCheckingMode = "basic"

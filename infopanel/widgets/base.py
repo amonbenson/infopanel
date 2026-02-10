@@ -1,5 +1,6 @@
-from abc import ABC, abstractmethod
 import logging
+from abc import ABC, abstractmethod
+
 from ..ledpanel import LEDPanel
 
 

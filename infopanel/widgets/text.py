@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from ..ledpanel import LEDPanel
 from .base import Widget
 

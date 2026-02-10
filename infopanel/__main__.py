@@ -1,4 +1,5 @@
 import logging
+
 from .ledpanel import LEDPanel
 from .widgets import HafasWidget
 

@@ -1,11 +1,10 @@
-import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-
 try:
     from RGBMatrixEmulator import RGBMatrix, RGBMatrixOptions, graphics
+
     if TYPE_CHECKING:
         from RGBMatrixEmulator.emulation.canvas import Canvas
 except ImportError:

@@ -1,0 +1,19 @@
+[project]
+name = "infopanel"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "pyhafas>=0.6.1",
+    "rgbmatrix",
+]
+
+[dependency-groups]
+dev = [
+    "rgbmatrixemulator>=0.15.1",
+    "watchfiles>=1.1.1",
+]
+
+[tool.uv.sources]
+rgbmatrix = { git = "https://github.com/hzeller/rpi-rgb-led-matrix", rev = "631e6dc02f46d09e0ea4403dd1cc9663204edce5" }

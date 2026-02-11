@@ -91,9 +91,9 @@ class Scheduler:
 
         self._running = True
 
-        # Setup all widgets
+        # Start all widgets
         for widget in self._widgets:
-            widget.setup()
+            widget.start()
 
         try:
             # Show the first widget
@@ -122,6 +122,6 @@ class Scheduler:
         finally:
             self._logger.info("Stopping scheduler...")
 
-            # Teardown all widgets
+            # Stop all widgets
             for widget in self._widgets:
-                widget.teardown()
+                widget.stop()

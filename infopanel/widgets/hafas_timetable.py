@@ -1,4 +1,3 @@
-import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -224,10 +223,7 @@ class HafasTimetable(Widget):
         self._departures: list[Departure] = []
         self._hims: list[Him] = []
 
-        # Setup the backgroung fetch thread
-        self._lock = threading.Lock()
-        self._thread = threading.Thread(target=self._fetch_loop, daemon=True)
-        self._running = False
+        self.register_background_thread(self._fetch_loop)
 
     def _current_minutes(self) -> int:
         now = datetime.now(self._timezone)
@@ -235,7 +231,7 @@ class HafasTimetable(Widget):
 
     def _fetch_loop(self):
         # Fetch location
-        self._logger.info(f"Searching for location '{self._params['location']}'...")
+        self._logger.debug(f"Searching for location '{self._params['location']}'...")
         with self._lock:
             self._status = "loading"
 
@@ -249,7 +245,7 @@ class HafasTimetable(Widget):
         while self._running:
             try:
                 # Fetch departures and hims
-                self._logger.info(f"Fetching departures for location '{self._location.name}'...")
+                self._logger.debug(f"Fetching departures for location '{self._location.name}'...")
                 now_minutes = self._current_minutes()
                 departures, hims = self._api.list_departures(
                     now_minutes=now_minutes,
@@ -270,14 +266,6 @@ class HafasTimetable(Widget):
                 # Schedule next refresh
                 self.request_render()
                 time.sleep(self._params["refresh_interval"])
-
-    def setup(self):
-        self._running = True
-        self._thread.start()
-
-    def teardown(self):
-        self._running = False
-        self._thread.join(timeout=5)
 
     def render(self, panel: LEDPanel, delta_time: float):
         font = "regular"

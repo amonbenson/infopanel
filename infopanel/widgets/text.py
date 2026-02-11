@@ -12,6 +12,8 @@ class TextWidget(Widget):
     def render(self, panel: LEDPanel, delta_time: float):
         font = "regular"
 
+        panel.clear()
+
         text = self._params["text"]
         lines = text.splitlines()
 

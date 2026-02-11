@@ -9,10 +9,7 @@ class TextWidget(Widget):
     def __init__(self, text: str = "Hello, World!"):
         super().__init__(text=text)
 
-    def update(self, delta_time: float):
-        pass
-
-    def render(self, panel: LEDPanel):
+    def render(self, panel: LEDPanel, delta_time: float):
         font = "regular"
 
         text = self._params["text"]

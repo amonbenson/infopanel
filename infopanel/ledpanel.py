@@ -77,8 +77,11 @@ class LEDPanel:
         self._matrix = RGBMatrix(options=options)
         self._canvas = self._matrix.CreateFrameCanvas()
 
-    def render(self):
+    def swap(self):
         self.matrix.SwapOnVSync(self._canvas)
+
+    def clear(self):
+        self.canvas.Clear()
 
     def character_width(self, font: str, char: str) -> int:
         return self._get_font(font).CharacterWidth(ord(char))

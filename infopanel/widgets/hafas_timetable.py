@@ -1,5 +1,8 @@
+import threading
+import time
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Literal
 from zoneinfo import ZoneInfo
 
 import requests
@@ -146,7 +149,13 @@ class HafasAPI:
         location = locations[0]
         return Location.from_hafas(location)
 
-    def list_departures(self, location_id: str, top: int = 10, now_minutes: int = 0) -> tuple[list[Departure], list[Him]]:
+    def list_departures(
+        self,
+        now_minutes: int,
+        location_id: str,
+        lines: list[str] | None = None,
+        top: int = 10,
+    ) -> tuple[list[Departure], list[Him]]:
         res = self.request({
             "meth": "StationBoard",
             "req": {
@@ -175,6 +184,10 @@ class HafasAPI:
         departures = [d for d in departures if not d.cancelled and d.minutes > 0]
         departures.sort(key=lambda d: d.minutes)
 
+        # filter by lines
+        if lines is not None:
+            departures = [d for d in departures if d.name.strip() in lines]
+
         # Get unique hims
         hafas_hims = common.get("himL", [])
         hafas_hims = list({him["hid"]: him for him in hafas_hims}.values())
@@ -184,9 +197,20 @@ class HafasAPI:
 
 
 @dataclass
-class HafasWidget(Widget):
-    def __init__(self, location: str, timezone: str = "UTC"):
-        super().__init__(location=location, timezone=timezone)
+class HafasTimetable(Widget):
+    def __init__(
+        self,
+        location: str,
+        timezone: str = "UTC",
+        lines: list[str] | None = None,
+        refresh_interval: int = 10,
+    ):
+        super().__init__(
+            location=location,
+            timezone=timezone,
+            lines=lines,
+            refresh_interval=refresh_interval,
+        )
 
         # Store the timezone info
         self._timezone = ZoneInfo(timezone)
@@ -195,59 +219,126 @@ class HafasWidget(Widget):
         self._api = HafasAPI()
 
         # Search for the provided location
+        self._status: Literal["loading", "error", "ready"] = "loading"
         self._location: Location | None = None
         self._departures: list[Departure] = []
         self._hims: list[Him] = []
 
-        # Initial fetch
-        self._fetch()
+        # Setup the backgroung fetch thread
+        self._lock = threading.Lock()
+        self._thread = threading.Thread(target=self._fetch_loop, daemon=True)
+        self._running = False
 
     def _current_minutes(self) -> int:
         now = datetime.now(self._timezone)
         return now.hour * 60 + now.minute
 
-    def _fetch(self):
+    def _fetch_loop(self):
         # Fetch location
-        if self._location is None:
-            self._location = self._api.search_location(self._params["location"])
-            if self._location is None:
-                raise ValueError(f"Location '{self._params['location']}' not found")
+        self._logger.info(f"Searching for location '{self._params['location']}'...")
+        with self._lock:
+            self._status = "loading"
 
-        # Fetch departures and hims
-        now_minutes = self._current_minutes()
-        self._departures, self._hims = self._api.list_departures(
-            location_id=self._location.id,
-            now_minutes=now_minutes,
-            top=20,
-        )
+        location = self._api.search_location(self._params["location"])
+        if location is None:
+            raise ValueError(f"Location '{self._params['location']}' not found")
 
-    def update(self, delta_time: float):
-        pass
+        with self._lock:
+            self._location = location
 
-    def render(self, panel: LEDPanel):
+        while self._running:
+            try:
+                # Fetch departures and hims
+                self._logger.info(f"Fetching departures for location '{self._location.name}'...")
+                now_minutes = self._current_minutes()
+                departures, hims = self._api.list_departures(
+                    now_minutes=now_minutes,
+                    location_id=self._location.id,
+                    lines=self._params["lines"],
+                    top=50,
+                )
+
+                with self._lock:
+                    self._status = "ready"
+                    self._departures = departures
+                    self._hims = hims
+            except Exception as e:
+                self._logger.error(f"Error fetching departures: {e}")
+                with self._lock:
+                    self._status = "error"
+            finally:
+                # Schedule next refresh
+                self.request_render()
+                time.sleep(self._params["refresh_interval"])
+
+    def setup(self):
+        self._running = True
+        self._thread.start()
+
+    def teardown(self):
+        self._running = False
+        self._thread.join(timeout=5)
+
+    def render(self, panel: LEDPanel, delta_time: float):
         font = "regular"
         color = (255, 128, 0)
 
-        # Draw the location
-        location = self._location.name if self._location else "Unknown location"
-        panel.draw_text(
-            text=location,
-            x=panel.width // 2,
+        panel.clear()
+
+        # Draw loading or error state if needed
+        with self._lock:
+            status = self._status
+        if status != "ready":
+            text = "Loading..." if status == "loading" else "Missingno. :("
+            panel.draw_text(
+                text=text,
+                x=panel.width // 2,
+                y=panel.height // 2,
+                font=font,
+                color=color,
+                halign="center",
+                valign="center",
+            )
+            return
+
+        # Draw a clock
+        now = datetime.now(self._timezone)
+        time_str = now.strftime("%H:%M")
+        clock_x, _, _, _ = panel.draw_text(
+            text=time_str,
+            x=panel.width - 1,
             y=0,
             font=font,
             color=color,
-            halign="center",
+            halign="right",
+            valign="top",
+        )
+
+        # Draw the location
+        with self._lock:
+            location = self._location.name if self._location else "Unknown location"
+        panel.draw_text(
+            text=location,
+            x=1,
+            y=0,
+            max_width=clock_x - 5,
+            font=font,
+            color=color,
+            halign="left",
             valign="top",
         )
 
         # Draw each departure
         max_departures = panel.height // panel.line_height(font) - 1
-        for i, departure in enumerate(self._departures[:max_departures]):
+        with self._lock:
+            departures = self._departures[:max_departures]
+
+        for i, departure in enumerate(departures):
             y = (i + 1) * panel.line_height(font)
 
             # Departure line name
-            name_x, _, name_width, _ = panel.draw_text(
-                text=departure.name,
+            panel.draw_text(
+                text=departure.name[:3],
                 x=1,
                 y=y,
                 font="bold",
@@ -256,21 +347,9 @@ class HafasWidget(Widget):
                 valign="top",
             )
 
-            # Departure time till departure
-            minutes = max(0, min(99, departure.minutes))
-            minutes_x, _, minutes_width, _ = panel.draw_text(
-                text=f"{minutes}'",
-                x=panel.width - 1,
-                y=y,
-                font=font,
-                color=color,
-                halign="right",
-                valign="top",
-            )
-
             # Departure line direction/destination
-            direction_x = name_x + name_width + 4
-            direction_max_width = minutes_x - direction_x - 4
+            direction_x = 22
+            direction_max_width = panel.width - direction_x - 15
             panel.draw_text(
                 text=departure.direction,
                 x=direction_x,
@@ -281,4 +360,16 @@ class HafasWidget(Widget):
                 valign="top",
                 max_width=direction_max_width,
                 ellipsis="...",
+            )
+
+            # Departure time till departure
+            minutes = max(0, min(99, departure.minutes))
+            panel.draw_text(
+                text=f"{minutes}'",
+                x=panel.width - 1,
+                y=y,
+                font=font,
+                color=color,
+                halign="right",
+                valign="top",
             )

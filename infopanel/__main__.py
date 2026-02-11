@@ -1,7 +1,7 @@
 import logging
 
 from .ledpanel import LEDPanel
-from .widgets import HafasWidget
+from .scheduler import Scheduler
 
 
 def main():
@@ -10,15 +10,32 @@ def main():
     panel = LEDPanel()
     panel.initialize()
 
-    widget = HafasWidget("Neue Filandastr", timezone="Europe/Berlin")
-    widget.render(panel)
-
-    panel.render()
-
-    try:
-        input("Press Enter to exit...")
-    except KeyboardInterrupt:
-        pass
+    scheduler = Scheduler(
+        config={
+            "widgets": [
+                {
+                    "type": "hafas_timetable",
+                    "params": {
+                        "location": "Ernst-Reuter-Platz",
+                        "timezone": "Europe/Berlin",
+                        "lines": ["U2", "245", "M45"],
+                    },
+                    "duration": 20,
+                },
+                {
+                    "type": "hafas_timetable",
+                    "params": {
+                        "location": "Berlin Zoologischer Garten",
+                        "timezone": "Europe/Berlin",
+                        "lines": ["S3", "S5", "S7", "S9"],
+                    },
+                    "duration": 20,
+                },
+            ],
+        },
+        panel=panel,
+    )
+    scheduler.run()
 
 
 if __name__ == "__main__":

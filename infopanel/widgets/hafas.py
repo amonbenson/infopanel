@@ -246,7 +246,7 @@ class HafasWidget(Widget):
             y = (i + 1) * panel.line_height(font)
 
             # Departure line name
-            panel.draw_text(
+            name_x, _, name_width, _ = panel.draw_text(
                 text=departure.name,
                 x=1,
                 y=y,
@@ -256,20 +256,9 @@ class HafasWidget(Widget):
                 valign="top",
             )
 
-            # Departure line direction/destination
-            panel.draw_text(
-                text=departure.direction[:18],
-                x=25,
-                y=y,
-                font=font,
-                color=color,
-                halign="left",
-                valign="top",
-            )
-
             # Departure time till departure
             minutes = max(0, min(99, departure.minutes))
-            panel.draw_text(
+            minutes_x, _, minutes_width, _ = panel.draw_text(
                 text=f"{minutes}'",
                 x=panel.width - 1,
                 y=y,
@@ -277,4 +266,19 @@ class HafasWidget(Widget):
                 color=color,
                 halign="right",
                 valign="top",
+            )
+
+            # Departure line direction/destination
+            direction_x = name_x + name_width + 4
+            direction_max_width = minutes_x - direction_x - 4
+            panel.draw_text(
+                text=departure.direction,
+                x=direction_x,
+                y=y,
+                font=font,
+                color=color,
+                halign="left",
+                valign="top",
+                max_width=direction_max_width,
+                ellipsis="...",
             )

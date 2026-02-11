@@ -83,15 +83,55 @@ class LEDPanel:
     def character_width(self, font: str, char: str) -> int:
         return self._get_font(font).CharacterWidth(ord(char))
 
+    def line_width(self, font: str, text: str) -> int:
+        font_obj = self._get_font(font)
+        return sum(font_obj.CharacterWidth(ord(c)) for c in text) - 1  # -1 to remove extra space after the last character
+
     def line_height(self, font: str) -> int:
         return self._get_font(font).height
 
-    def draw_text(self, text: str, x: int, y: int, *, font: str = "regular", color: tuple[int, int, int] = (255, 255, 255), halign: str = "left", valign: str = "top"):
+    def draw_text(
+        self,
+        text: str,
+        x: int,
+        y: int,
+        *,
+        max_width: int | None = None,
+        font: str = "regular",
+        color: tuple[int, int, int] = (255, 255, 255),
+        halign: str = "left",
+        valign: str = "top",
+        ellipsis: str = "...",
+    ) -> tuple[int, int, int, int]:
+        if not text:
+            return (x, y, 0, 0)
+
         font_obj = self._get_font(font)
 
         # Get text dimensions for alignment
-        text_width = sum(font_obj.CharacterWidth(ord(c)) for c in text)
+        character_widths = [font_obj.CharacterWidth(ord(c)) for c in text]
+        text_width = sum(character_widths) - 1  # -1 to remove extra space after the last character
         text_baseline = font_obj.baseline
+
+        # Truncate text if it exceeds max_width
+        if max_width is not None and text_width > max_width:
+            # Calculate width of truncator
+            truncator_width = sum(font_obj.CharacterWidth(ord(c)) for c in ellipsis) - 1  # -1 to remove extra space after the last character
+            available_width = max_width - truncator_width
+
+            # Start chopping characters off the end until it fits
+            while text and text_width > available_width:
+                text = text[:-1]  # Remove last character from the text
+                text_width -= character_widths.pop()  # Remove width of the last character from the total width
+
+            # Stop here if no text is left after truncation
+            if not text:
+                return (x, y, 0, 0)
+
+            # Append truncator if text was truncated
+            if available_width > 0:
+                text += ellipsis
+                text_width += truncator_width
 
         # Adjust x based on horizontal alignment
         if halign == "center":
@@ -106,3 +146,5 @@ class LEDPanel:
             y += text_baseline
 
         graphics.DrawText(self.canvas, font_obj, x, y, graphics.Color(*color), text)
+
+        return x, y - text_baseline, text_width, text_baseline

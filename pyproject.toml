@@ -12,8 +12,13 @@ dependencies = [
 [dependency-groups]
 dev = [
     "rgbmatrixemulator>=0.15.1",
-    "ruff>=0.15.0",
+    "ruff>=0.15.1",
     "watchfiles>=1.1.1",
+]
+
+[tool.uv]
+exclude-dependencies = [
+    "pygame",
 ]
 
 [tool.uv.sources]

@@ -3,6 +3,9 @@ import yaml
 DEFAULT_CONFIG = """
 ledpanel:
   emulator: true
+  cols: 128
+  rows: 64
+  hardware_mapping: "adafruit-hat"
 
 scheduler:
   widgets:

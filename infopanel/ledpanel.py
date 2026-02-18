@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -13,16 +12,12 @@ else:
     from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics  # type: ignore
 
 
-@dataclass
-class LEDPanelConfig:
-    rows: int = 64
-    cols: int = 128
-    hardware_mapping: str = "regular"
-
-
 class LEDPanel:
-    def __init__(self, config: LEDPanelConfig | None = None):
-        self._config = config or LEDPanelConfig()
+    def __init__(self, config: dict):
+        self._config = config
+
+        assert "cols" in config, "ledpanel config is missing required key 'cols'"
+        assert "rows" in config, "ledpanel config is missing required key 'rows'"
 
         self._matrix: RGBMatrix | None = None
         self._canvas: Canvas | None = None
@@ -64,17 +59,17 @@ class LEDPanel:
 
     @property
     def width(self) -> int:
-        return self._config.cols
+        return self._config["cols"]
 
     @property
     def height(self) -> int:
-        return self._config.rows
+        return self._config["rows"]
 
     def initialize(self):
         options = RGBMatrixOptions()
-        options.rows = self._config.rows
-        options.cols = self._config.cols
-        options.hardware_mapping = self._config.hardware_mapping
+        options.rows = self._config["rows"]
+        options.cols = self._config["cols"]
+        options.hardware_mapping = self._config.get("hardware_mapping", "regular")
 
         self._matrix = RGBMatrix(options=options)
         self._canvas = self._matrix.CreateFrameCanvas()

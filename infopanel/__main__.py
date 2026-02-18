@@ -8,7 +8,7 @@ from .scheduler import Scheduler
 def main():
     logging.basicConfig(level=logging.INFO)
 
-    panel = LEDPanel()
+    panel = LEDPanel(CONFIG.get("ledpanel", {}))
     panel.initialize()
 
     scheduler = Scheduler(

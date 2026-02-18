@@ -3,6 +3,7 @@ import yaml
 DEFAULT_CONFIG = """
 ledpanel:
   emulator: true
+
 scheduler:
   widgets:
     - type: hafas_timetable
@@ -11,6 +12,7 @@ scheduler:
         timezone: "Europe/Berlin"
         lines: ["U2", "245", "M45"]
       duration: 20
+
     - type: hafas_timetable
       params:
         location: "Berlin Zoologischer Garten"

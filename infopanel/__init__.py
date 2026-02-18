@@ -1,0 +1,3 @@
+from .config import load_config
+
+load_config("adwdaw.yaml")

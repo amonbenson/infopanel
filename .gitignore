@@ -220,3 +220,6 @@ __marimo__/
 
 # Temporary/Test files
 /.tmp/
+
+# Local configuration
+/config.yaml

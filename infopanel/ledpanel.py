@@ -2,12 +2,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-try:
+from .config import CONFIG
+
+if CONFIG.get("ledpanel", {}).get("emulator", False):
     from RGBMatrixEmulator import RGBMatrix, RGBMatrixOptions, graphics
 
     if TYPE_CHECKING:
         from RGBMatrixEmulator.emulation.canvas import Canvas
-except ImportError:
+else:
     from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics  # type: ignore
 
 

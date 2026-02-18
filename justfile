@@ -1,5 +1,5 @@
 sync:
-    uv sync
+    uv --verbose sync
 
 dev:
     uv run watchfiles "python -m infopanel"

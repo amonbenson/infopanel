@@ -14,6 +14,7 @@ dependencies = [
 dev = [
     "rgbmatrixemulator>=0.15.1",
     "ruff>=0.15.1",
+    "setuptools>=82.0.0",
     "watchfiles>=1.1.1",
 ]
 
@@ -23,7 +24,7 @@ exclude-dependencies = [
 ]
 
 [tool.uv.sources]
-rgbmatrix = { git = "https://github.com/hzeller/rpi-rgb-led-matrix", rev = "631e6dc02f46d09e0ea4403dd1cc9663204edce5" }
+rgbmatrix = { git = "https://github.com/hzeller/rpi-rgb-led-matrix", rev = "a6d11e56110da3442a7781db91d0889345ee8137" }
 
 [tool.pytest.ini_options]
 pythonpath = ["."]  # Include src directory as a module

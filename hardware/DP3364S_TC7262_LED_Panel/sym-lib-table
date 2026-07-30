@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "LED_Panel")(type "KiCad")(uri "${KIPRJMOD}/lib/LED_Panel.kicad_sym")(options "")(descr ""))
+)
